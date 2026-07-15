@@ -99,7 +99,6 @@
   <!-- Main screen -->
   <div class="screen active" id="screen-home">
     <div id="name-list"></div>
-    <button class="results-link" id="btn-results">See all sizes</button>
     <p class="demo-note" id="demo-note">Preview mode: answers save only on this device.</p>
   </div>
 
@@ -124,10 +123,9 @@
 
 <script>
 // ---- Configuration -------------------------------------------------------
-// Paste the Firebase Realtime Database URL here, e.g.
-// "https://your-project-default-rtdb.firebaseio.com"
-const DB_URL = "";
-const DB_PATH = "shirt-poll/responses";
+// Shared storage key on textdb.online. Leave empty for on-device preview mode.
+const TEXTDB_KEY = "barnes-shirt-poll-7q2x9v4m8r";
+const LOCAL_KEY = "shirt-poll/responses";
 
 // ---- Family data ---------------------------------------------------------
 const ADULT_SIZES = ["S", "M", "L", "XL", "2XL"];
@@ -151,27 +149,31 @@ const KIDS = [
   { id: "rory",   label: "Rory",   couple: "b" },
 ];
 
-// ---- Storage (Firebase REST, or localStorage preview fallback) -----------
+// ---- Storage (textdb.online, or localStorage preview fallback) -----------
 const storage = {
   async load() {
-    if (!DB_URL) {
-      return JSON.parse(localStorage.getItem(DB_PATH) || "{}");
+    if (!TEXTDB_KEY) {
+      return JSON.parse(localStorage.getItem(LOCAL_KEY) || "{}");
     }
-    const res = await fetch(`${DB_URL}/${DB_PATH}.json`);
+    const res = await fetch(`https://textdb.online/${TEXTDB_KEY}`);
     if (!res.ok) throw new Error("load failed");
-    return (await res.json()) || {};
+    const text = await res.text();
+    if (!text.trim()) return {};
+    try { return JSON.parse(text) || {}; } catch (e) { return {}; }
   },
   async save(updates) {
-    if (!DB_URL) {
-      const all = JSON.parse(localStorage.getItem(DB_PATH) || "{}");
+    if (!TEXTDB_KEY) {
+      const all = JSON.parse(localStorage.getItem(LOCAL_KEY) || "{}");
       Object.assign(all, updates);
-      localStorage.setItem(DB_PATH, JSON.stringify(all));
+      localStorage.setItem(LOCAL_KEY, JSON.stringify(all));
       return;
     }
-    const res = await fetch(`${DB_URL}/${DB_PATH}.json`, {
-      method: "PATCH",
-      body: JSON.stringify(updates),
-    });
+    // Merge into the latest copy so one family member's answers
+    // never overwrite another's.
+    const all = await this.load();
+    Object.assign(all, updates);
+    const body = new URLSearchParams({ key: TEXTDB_KEY, value: JSON.stringify(all) });
+    const res = await fetch("https://textdb.online/update", { method: "POST", body });
     if (!res.ok) throw new Error("save failed");
   },
 };
@@ -202,7 +204,7 @@ function renderHome() {
     btn.onclick = () => openPerson(a);
     list.appendChild(btn);
   });
-  $("demo-note").classList.toggle("show", !DB_URL);
+  $("demo-note").classList.toggle("show", !TEXTDB_KEY);
 }
 
 // ---- Person screen -------------------------------------------------------
@@ -350,13 +352,14 @@ async function openResults() {
 
 // ---- Wiring --------------------------------------------------------------
 $("btn-submit").onclick = submit;
-$("btn-results").onclick = openResults;
 $("btn-back-person").onclick = () => { renderHome(); show("screen-home"); };
 $("btn-back-results").onclick = () => { renderHome(); show("screen-home"); };
 
 (async function init() {
   try { responses = await storage.load(); } catch (e) { responses = {}; }
   renderHome();
+  // Private results view for Kate: open the link with ?results=1
+  if (new URLSearchParams(location.search).get("results")) openResults();
 })();
 </script>
 </body>
