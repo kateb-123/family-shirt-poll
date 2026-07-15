@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family Shirt Sizes</title>
+<style>
+  :root {
+    --bg: #faf7f2;
+    --card: #ffffff;
+    --ink: #2b2620;
+    --muted: #8a8177;
+    --accent: #1f6f54;
+    --accent-soft: #e3efe9;
+    --line: #e7e0d6;
+    --danger: #b3402f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 24px 16px 48px;
+  }
+  .wrap { max-width: 440px; margin: 0 auto; }
+  h1 { font-size: 1.6rem; text-align: center; margin-bottom: 4px; }
+  .sub { text-align: center; color: var(--muted); margin-bottom: 24px; font-size: 0.95rem; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .name-btn {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; padding: 18px 20px; margin-bottom: 12px;
+    background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+    font-size: 1.15rem; font-weight: 600; color: var(--ink);
+    cursor: pointer; text-align: left;
+  }
+  .name-btn:active { background: var(--accent-soft); }
+  .name-btn .done { color: var(--accent); font-size: 1.1rem; font-weight: 700; }
+
+  .back {
+    background: none; border: none; color: var(--accent);
+    font-size: 1rem; cursor: pointer; padding: 8px 0; margin-bottom: 8px; font-weight: 600;
+  }
+  h2 { font-size: 1.3rem; margin-bottom: 16px; }
+  .section-label { font-weight: 700; margin: 22px 0 10px; font-size: 1.05rem; }
+  .hint { color: var(--muted); font-size: 0.9rem; margin: -6px 0 10px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    padding: 12px 18px; border-radius: 999px; border: 1.5px solid var(--line);
+    background: var(--card); font-size: 1rem; font-weight: 600; cursor: pointer; color: var(--ink);
+  }
+  .chip.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .kid-block { padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .kid-block:last-of-type { border-bottom: none; }
+  .kid-name { font-weight: 600; margin-bottom: 8px; }
+
+  .primary {
+    display: block; width: 100%; margin-top: 26px; padding: 16px;
+    background: var(--accent); color: #fff; border: none; border-radius: 14px;
+    font-size: 1.1rem; font-weight: 700; cursor: pointer;
+  }
+  .primary:disabled { opacity: 0.45; cursor: default; }
+
+  .error {
+    display: none; margin-top: 14px; padding: 12px 14px; border-radius: 10px;
+    background: #f9e5e1; color: var(--danger); font-size: 0.95rem;
+  }
+  .error.show { display: block; }
+
+  .results-link {
+    display: block; margin: 20px auto 0; background: none; border: none;
+    color: var(--accent); font-size: 1rem; cursor: pointer; text-decoration: underline; font-weight: 600;
+  }
+  .result-row {
+    display: flex; justify-content: space-between; padding: 12px 4px;
+    border-bottom: 1px solid var(--line); font-size: 1.05rem;
+  }
+  .result-row .size { font-weight: 700; }
+  .result-row .pending { color: var(--muted); font-weight: 400; }
+  .result-group { margin: 18px 0 4px; font-size: 0.85rem; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted); font-weight: 700; }
+
+  .demo-note {
+    display: none; text-align: center; font-size: 0.8rem; color: var(--muted);
+    margin-top: 28px;
+  }
+  .demo-note.show { display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Family Shirt Sizes</h1>
+  <p class="sub">Tap your name and pick your size</p>
+
+  <!-- Main screen -->
+  <div class="screen active" id="screen-home">
+    <div id="name-list"></div>
+    <button class="results-link" id="btn-results">See all sizes</button>
+    <p class="demo-note" id="demo-note">Preview mode: answers save only on this device.</p>
+  </div>
+
+  <!-- Person screen -->
+  <div class="screen" id="screen-person">
+    <button class="back" id="btn-back-person">&larr; Back</button>
+    <h2 id="person-title"></h2>
+    <div class="section-label">Your size</div>
+    <div class="chips" id="adult-chips"></div>
+    <div id="kids-area"></div>
+    <button class="primary" id="btn-submit" disabled>Submit</button>
+    <div class="error" id="save-error">Couldn't save. Check your connection and tap Submit again.</div>
+  </div>
+
+  <!-- Results screen -->
+  <div class="screen" id="screen-results">
+    <button class="back" id="btn-back-results">&larr; Back</button>
+    <h2>Everyone's sizes</h2>
+    <div id="results-list"></div>
+  </div>
+</div>
+
+<script>
+// ---- Configuration -------------------------------------------------------
+// Paste the Firebase Realtime Database URL here, e.g.
+// "https://your-project-default-rtdb.firebaseio.com"
+const DB_URL = "";
+const DB_PATH = "shirt-poll/responses";
+
+// ---- Family data ---------------------------------------------------------
+const ADULT_SIZES = ["S", "M", "L", "XL", "2XL"];
+const KID_SIZES = ["2T", "3T", "4T", "5T", "Youth XS", "Youth S", "Youth M"];
+
+const ADULTS = [
+  { id: "jefe",    label: "Jefe" },
+  { id: "gram",    label: "Gram" },
+  { id: "bryant",  label: "Bryant",  couple: "a" },
+  { id: "charli",  label: "Charli",  couple: "a" },
+  { id: "kate",    label: "Kate" },
+  { id: "tim",     label: "Tim",     couple: "b" },
+  { id: "madison", label: "Madison", couple: "b" },
+];
+
+const KIDS = [
+  { id: "emma",   label: "Emma",   couple: "a" },
+  { id: "isaac",  label: "Isaac",  couple: "a" },
+  { id: "ian",    label: "Ian",    couple: "a" },
+  { id: "eileen", label: "Eileen", couple: "b" },
+  { id: "rory",   label: "Rory",   couple: "b" },
+];
+
+// ---- Storage (Firebase REST, or localStorage preview fallback) -----------
+const storage = {
+  async load() {
+    if (!DB_URL) {
+      return JSON.parse(localStorage.getItem(DB_PATH) || "{}");
+    }
+    const res = await fetch(`${DB_URL}/${DB_PATH}.json`);
+    if (!res.ok) throw new Error("load failed");
+    return (await res.json()) || {};
+  },
+  async save(updates) {
+    if (!DB_URL) {
+      const all = JSON.parse(localStorage.getItem(DB_PATH) || "{}");
+      Object.assign(all, updates);
+      localStorage.setItem(DB_PATH, JSON.stringify(all));
+      return;
+    }
+    const res = await fetch(`${DB_URL}/${DB_PATH}.json`, {
+      method: "PATCH",
+      body: JSON.stringify(updates),
+    });
+    if (!res.ok) throw new Error("save failed");
+  },
+};
+
+// ---- State ---------------------------------------------------------------
+let responses = {};
+let current = null;      // adult being edited
+let picks = {};          // pending selections { personId: size }
+let confirmMode = false; // second spouse reviewing kid sizes
+
+const $ = (id) => document.getElementById(id);
+
+function show(screenId) {
+  document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
+  $(screenId).classList.add("active");
+  window.scrollTo(0, 0);
+}
+
+// ---- Main screen ---------------------------------------------------------
+function renderHome() {
+  const list = $("name-list");
+  list.innerHTML = "";
+  ADULTS.forEach((a) => {
+    const btn = document.createElement("button");
+    btn.className = "name-btn";
+    const done = responses[a.id] && responses[a.id].size;
+    btn.innerHTML = `<span>${a.label}</span>${done ? '<span class="done">&#10003;</span>' : ""}`;
+    btn.onclick = () => openPerson(a);
+    list.appendChild(btn);
+  });
+  $("demo-note").classList.toggle("show", !DB_URL);
+}
+
+// ---- Person screen -------------------------------------------------------
+async function openPerson(adult) {
+  current = adult;
+  picks = {};
+  $("save-error").classList.remove("show");
+
+  // Refresh so the second spouse sees the latest kid sizes
+  try { responses = await storage.load(); } catch (e) { /* keep what we have */ }
+
+  $("person-title").textContent = `Hi, ${adult.label}`;
+
+  renderChips($("adult-chips"), ADULT_SIZES, adult.id, responses[adult.id]?.size);
+
+  const kidsArea = $("kids-area");
+  kidsArea.innerHTML = "";
+  confirmMode = false;
+
+  if (adult.couple) {
+    const kids = KIDS.filter((k) => k.couple === adult.couple);
+    confirmMode = kids.every((k) => responses[k.id]?.size);
+
+    const label = document.createElement("div");
+    label.className = "section-label";
+    label.textContent = confirmMode ? "The kids' sizes so far" : "The kids' sizes";
+    kidsArea.appendChild(label);
+
+    if (confirmMode) {
+      const hint = document.createElement("p");
+      hint.className = "hint";
+      hint.textContent = "Tap a different size if anything looks off.";
+      kidsArea.appendChild(hint);
+    }
+
+    kids.forEach((k) => {
+      const block = document.createElement("div");
+      block.className = "kid-block";
+      const name = document.createElement("div");
+      name.className = "kid-name";
+      name.textContent = k.label;
+      block.appendChild(name);
+      const chips = document.createElement("div");
+      chips.className = "chips";
+      block.appendChild(chips);
+      kidsArea.appendChild(block);
+      renderChips(chips, KID_SIZES, k.id, responses[k.id]?.size);
+      if (confirmMode) picks[k.id] = responses[k.id].size;
+    });
+  }
+
+  if (responses[adult.id]?.size) picks[adult.id] = responses[adult.id].size;
+  updateSubmit();
+  show("screen-person");
+}
+
+function renderChips(container, sizes, personId, preselected) {
+  container.innerHTML = "";
+  sizes.forEach((size) => {
+    const chip = document.createElement("button");
+    chip.className = "chip" + (size === preselected ? " selected" : "");
+    chip.textContent = size;
+    chip.onclick = () => {
+      picks[personId] = size;
+      container.querySelectorAll(".chip").forEach((c) => c.classList.remove("selected"));
+      chip.classList.add("selected");
+      updateSubmit();
+    };
+    container.appendChild(chip);
+  });
+  if (preselected) picks[personId] = preselected;
+}
+
+function requiredIds() {
+  const ids = [current.id];
+  if (current.couple) KIDS.filter((k) => k.couple === current.couple).forEach((k) => ids.push(k.id));
+  return ids;
+}
+
+function updateSubmit() {
+  const ready = requiredIds().every((id) => picks[id]);
+  const btn = $("btn-submit");
+  btn.disabled = !ready;
+  btn.textContent = confirmMode ? "Looks right" : "Submit";
+}
+
+async function submit() {
+  const btn = $("btn-submit");
+  btn.disabled = true;
+  btn.textContent = "Saving...";
+  $("save-error").classList.remove("show");
+
+  const updates = {};
+  const now = Date.now();
+  updates[current.id] = { size: picks[current.id], ts: now };
+  if (current.couple) {
+    KIDS.filter((k) => k.couple === current.couple).forEach((k) => {
+      const prev = responses[k.id] || {};
+      updates[k.id] = {
+        size: picks[k.id],
+        enteredBy: prev.enteredBy || current.id,
+        ts: now,
+      };
+      if (confirmMode) updates[k.id].confirmedBy = current.id;
+    });
+  }
+
+  try {
+    await storage.save(updates);
+    Object.assign(responses, updates);
+    renderHome();
+    show("screen-home");
+  } catch (e) {
+    $("save-error").classList.add("show");
+    btn.disabled = false;
+    updateSubmit();
+  }
+}
+
+// ---- Results screen ------------------------------------------------------
+async function openResults() {
+  try { responses = await storage.load(); } catch (e) { /* keep what we have */ }
+  const list = $("results-list");
+  list.innerHTML = "";
+
+  const groups = [
+    { title: "Adults", people: ADULTS },
+    { title: "Kids", people: KIDS },
+  ];
+  groups.forEach((g) => {
+    const head = document.createElement("div");
+    head.className = "result-group";
+    head.textContent = g.title;
+    list.appendChild(head);
+    g.people.forEach((p) => {
+      const row = document.createElement("div");
+      row.className = "result-row";
+      const size = responses[p.id]?.size;
+      row.innerHTML = `<span>${p.label}</span><span class="${size ? "size" : "size pending"}">${size || "waiting"}</span>`;
+      list.appendChild(row);
+    });
+  });
+  show("screen-results");
+}
+
+// ---- Wiring --------------------------------------------------------------
+$("btn-submit").onclick = submit;
+$("btn-results").onclick = openResults;
+$("btn-back-person").onclick = () => { renderHome(); show("screen-home"); };
+$("btn-back-results").onclick = () => { renderHome(); show("screen-home"); };
+
+(async function init() {
+  try { responses = await storage.load(); } catch (e) { responses = {}; }
+  renderHome();
+})();
+</script>
+</body>
+</html>
