@@ -90,9 +90,20 @@
   }
   .kid-block .chip.selected { background: var(--teal); }
 
-  .kid-block { padding: 14px 0; border-bottom: 2px dashed rgba(58, 46, 57, 0.25); }
-  .kid-block:last-of-type { border-bottom: none; }
-  .kid-name { font-weight: 800; font-size: 1.1rem; margin-bottom: 10px; }
+  .kid-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 12px 0; border-bottom: 2px dashed rgba(58, 46, 57, 0.2);
+  }
+  .kid-row:last-of-type { border-bottom: none; }
+  .kid-name { font-weight: 800; font-size: 1.15rem; }
+  .kid-select {
+    font-family: inherit; font-weight: 800; font-size: 1rem; color: var(--ink);
+    padding: 10px 40px 10px 16px; border: 2px solid var(--ink); border-radius: 14px;
+    background: var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%233a2e39' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 14px center;
+    box-shadow: var(--shadow-sm);
+    appearance: none; -webkit-appearance: none; cursor: pointer;
+  }
+  .kid-select.filled { background-color: #d8f5f2; }
 
   .primary {
     display: block; width: 100%; margin-top: 30px; padding: 15px;
@@ -290,18 +301,34 @@ async function openPerson(adult) {
     }
 
     kids.forEach((k) => {
-      const block = document.createElement("div");
-      block.className = "kid-block";
+      const row = document.createElement("div");
+      row.className = "kid-row";
       const name = document.createElement("div");
       name.className = "kid-name";
       name.textContent = k.label;
-      block.appendChild(name);
-      const chips = document.createElement("div");
-      chips.className = "chips";
-      block.appendChild(chips);
-      kidsArea.appendChild(block);
-      renderChips(chips, KID_SIZES, k.id, responses[k.id]?.size);
-      if (confirmMode) picks[k.id] = responses[k.id].size;
+      row.appendChild(name);
+
+      const sel = document.createElement("select");
+      sel.className = "kid-select";
+      const placeholder = new Option("Pick a size", "");
+      placeholder.disabled = true;
+      placeholder.selected = true;
+      sel.appendChild(placeholder);
+      KID_SIZES.forEach((s) => sel.appendChild(new Option(s, s)));
+
+      const existing = responses[k.id]?.size;
+      if (existing) {
+        sel.value = existing;
+        picks[k.id] = existing;
+        sel.classList.add("filled");
+      }
+      sel.onchange = () => {
+        picks[k.id] = sel.value;
+        sel.classList.add("filled");
+        updateSubmit();
+      };
+      row.appendChild(sel);
+      kidsArea.appendChild(row);
     });
   }
 
