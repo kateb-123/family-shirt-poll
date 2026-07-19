@@ -9,26 +9,24 @@
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Baloo+2:wght@500;600;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #fff7ea;
+    --bg: #f7f1e3;
     --card: #ffffff;
-    --ink: #3a2e39;
-    --muted: #8d7f83;
-    --coral: #ff6b6b;
-    --teal: #2ec4b6;
-    --mustard: #ffd166;
-    --sky: #5aa9e6;
-    --lilac: #b388eb;
-    --green: #8ac926;
-    --danger: #c0392b;
-    --shadow: 4px 4px 0 rgba(58, 46, 57, 0.9);
-    --shadow-sm: 2.5px 2.5px 0 rgba(58, 46, 57, 0.9);
+    --ink: #232853;
+    --muted: #8a8272;
+    --red: #c8102e;
+    --green: #007a33;
+    --royal: #1d428a;
+    --orange: #f58426;
+    --gold: #ffc72c;
+    --purple: #552583;
+    --danger: #c8102e;
+    --shadow: 4px 4px 0 rgba(35, 40, 83, 0.9);
+    --shadow-sm: 2.5px 2.5px 0 rgba(35, 40, 83, 0.9);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: "Baloo 2", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background-color: var(--bg);
-    background-image: radial-gradient(rgba(58, 46, 57, 0.08) 2px, transparent 2px);
-    background-size: 26px 26px;
     color: var(--ink);
     min-height: 100vh;
     padding: 24px 16px 48px;
@@ -37,7 +35,7 @@
   .tee { flex: none; transform: rotate(-8deg); }
   h1 {
     font-family: "Fredoka", "Baloo 2", sans-serif;
-    font-size: 2rem; letter-spacing: 0.5px;
+    font-size: 2rem; letter-spacing: 0.5px; color: var(--red);
     display: flex; align-items: center; justify-content: center; gap: 10px;
     margin-bottom: 2px;
   }
@@ -56,13 +54,23 @@
   }
   .name-btn:nth-child(odd) { transform: rotate(-0.8deg); }
   .name-btn:nth-child(even) { transform: rotate(0.8deg); }
-  .name-btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 rgba(58, 46, 57, 0.9); }
-  .name-btn:nth-child(6n+1) { background: #ffe1e1; }
-  .name-btn:nth-child(6n+2) { background: #d8f5f2; }
-  .name-btn:nth-child(6n+3) { background: #fff0c9; }
-  .name-btn:nth-child(6n+4) { background: #ddebfd; }
-  .name-btn:nth-child(6n+5) { background: #ecdffb; }
-  .name-btn:nth-child(6n+6) { background: #e7f6cf; }
+  .name-btn:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 rgba(35, 40, 83, 0.9); }
+  .name-btn::after {
+    content: ""; width: 28px; height: 28px; flex: none;
+    border-radius: 50%; border: 2.5px solid var(--card);
+  }
+  .name-btn:nth-child(6n+1) { background: var(--green); color: #fff; }
+  .name-btn:nth-child(6n+1)::after { background: var(--gold); }
+  .name-btn:nth-child(6n+2) { background: var(--royal); color: #fff; }
+  .name-btn:nth-child(6n+2)::after { background: var(--red); }
+  .name-btn:nth-child(6n+3) { background: var(--red); color: #fff; }
+  .name-btn:nth-child(6n+3)::after { background: var(--royal); }
+  .name-btn:nth-child(6n+4) { background: var(--orange); color: #fff; }
+  .name-btn:nth-child(6n+4)::after { background: var(--green); }
+  .name-btn:nth-child(6n+5) { background: var(--purple); color: #fff; }
+  .name-btn:nth-child(6n+5)::after { background: var(--gold); }
+  .name-btn:nth-child(6n+6) { background: var(--gold); color: var(--ink); }
+  .name-btn:nth-child(6n+6)::after { background: var(--red); }
   .all-in { text-align: center; font-weight: 800; font-size: 1.2rem; margin: 8px 0 4px; }
   .done-head {
     margin: 30px 0 12px; font-size: 0.85rem; text-transform: uppercase;
@@ -76,10 +84,10 @@
     font-family: inherit; font-size: 1rem; font-weight: 800; color: var(--ink); cursor: pointer;
   }
   .done-pill:active { transform: translate(2px, 2px); box-shadow: none; }
-  .done-pill .tick { color: var(--teal); }
+  .done-pill .tick { color: var(--green); }
 
   .back {
-    background: none; border: none; color: var(--sky);
+    background: none; border: none; color: var(--royal);
     font-family: inherit; font-size: 1.05rem; cursor: pointer;
     padding: 8px 0; margin-bottom: 8px; font-weight: 800;
   }
@@ -95,35 +103,35 @@
     transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   .chip.selected {
-    background: var(--coral); color: #fff;
+    background: var(--red); color: #fff;
     transform: scale(1.1) rotate(-2deg);
   }
-  .kid-block .chip.selected { background: var(--teal); }
+  
 
   .kid-row {
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    padding: 12px 0; border-bottom: 2px dashed rgba(58, 46, 57, 0.2);
+    padding: 12px 0; border-bottom: 2px dashed rgba(35, 40, 83, 0.25);
   }
   .kid-row:last-of-type { border-bottom: none; }
   .kid-name { font-weight: 800; font-size: 1.15rem; }
   .kid-select {
     font-family: inherit; font-weight: 800; font-size: 1rem; color: var(--ink);
     padding: 10px 40px 10px 16px; border: 2px solid var(--ink); border-radius: 14px;
-    background: var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%233a2e39' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 14px center;
+    background: var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9'%3E%3Cpath d='M1 1l6 6 6-6' stroke='%23232853' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 14px center;
     box-shadow: var(--shadow-sm);
     appearance: none; -webkit-appearance: none; cursor: pointer;
   }
-  .kid-select.filled { background-color: #d8f5f2; }
+  .kid-select.filled { background-color: #e7f0e4; }
 
   .primary {
     display: block; width: 100%; margin-top: 30px; padding: 15px;
-    background: var(--mustard); color: var(--ink);
+    background: var(--gold); color: var(--ink);
     border: 2.5px solid var(--ink); border-radius: 18px; box-shadow: var(--shadow);
     font-family: "Fredoka", "Baloo 2", sans-serif; font-size: 1.2rem; font-weight: 700;
     letter-spacing: 0.5px; cursor: pointer;
     transition: transform 0.12s ease, box-shadow 0.12s ease;
   }
-  .primary:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 rgba(58, 46, 57, 0.9); }
+  .primary:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 rgba(35, 40, 83, 0.9); }
   .primary:disabled { opacity: 0.4; cursor: default; }
 
   .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
@@ -136,31 +144,31 @@
   }
   .color-card img { width: 100%; border-radius: 12px; }
   .color-card .votes { font-size: 0.9rem; color: var(--muted); font-weight: 700; }
-  .color-card:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 rgba(58, 46, 57, 0.9); }
-  .color-card.selected { background: #d8f5f2; }
+  .color-card:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 rgba(35, 40, 83, 0.9); }
+  .color-card.selected { background: #fdf3d7; }
   .color-card:disabled { opacity: 0.6; cursor: default; }
 
   .swatch {
     width: 20px; height: 20px; border-radius: 50%; flex: none;
     border: 2px solid var(--ink); display: inline-block;
   }
-  .swatch.rose { background: #c76b76; }
-  .swatch.blue { background: #b9c9ee; }
+  .swatch.brick { background: #a85c55; }
+  .swatch.denim { background: #b9c9ee; }
   .result-right { display: flex; align-items: center; gap: 8px; }
 
   .error {
     display: none; margin-top: 14px; padding: 12px 14px;
     border: 2px solid var(--danger); border-radius: 12px;
-    background: #fdecea; color: var(--danger); font-size: 0.95rem; font-weight: 600;
+    background: #fbe9e7; color: var(--danger); font-size: 0.95rem; font-weight: 600;
   }
   .error.show { display: block; }
 
   .result-row {
     display: flex; justify-content: space-between; align-items: center;
-    padding: 10px 4px; border-bottom: 2px dashed rgba(58, 46, 57, 0.2); font-size: 1.1rem;
+    padding: 10px 4px; border-bottom: 2px dashed rgba(35, 40, 83, 0.25); font-size: 1.1rem;
   }
   .result-row .size {
-    font-weight: 800; background: var(--mustard);
+    font-weight: 800; background: var(--gold);
     border: 2px solid var(--ink); border-radius: 999px; padding: 1px 14px;
   }
   .result-row .pending {
@@ -183,7 +191,7 @@
   <h1>
     <svg class="tee" viewBox="0 0 64 58" width="38" height="35" aria-hidden="true">
       <path d="M22 3 L8 9 L2 21 L12 27 L13 54 L51 54 L52 27 L62 21 L56 9 L42 3 C42 11 22 11 22 3 Z"
-            fill="#ff6b6b" stroke="#3a2e39" stroke-width="3" stroke-linejoin="round"/>
+            fill="#c8102e" stroke="#232853" stroke-width="3" stroke-linejoin="round"/>
       <path d="M25 30 h14 M25 38 h14" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
     </svg>
     <span>Family Shirt Sizes</span>
@@ -212,15 +220,15 @@
     <button class="back" id="btn-back-color">&larr; Back</button>
     <h2>Vote on a shirt color</h2>
     <div class="color-grid">
-      <button class="color-card" data-color="rose">
-        <img src="shirts/rose.jpg" alt="Rose shirt">
-        <span>Rose</span>
-        <span class="votes" id="votes-rose"></span>
+      <button class="color-card" data-color="brick">
+        <img src="shirts/brick.jpg" alt="Brick shirt">
+        <span>Brick</span>
+        <span class="votes" id="votes-brick"></span>
       </button>
-      <button class="color-card" data-color="blue">
-        <img src="shirts/blue.jpg" alt="Blue shirt">
-        <span>Blue</span>
-        <span class="votes" id="votes-blue"></span>
+      <button class="color-card" data-color="denim">
+        <img src="shirts/denim.jpg" alt="Denim shirt">
+        <span>Denim</span>
+        <span class="votes" id="votes-denim"></span>
       </button>
     </div>
     <div class="error" id="color-error">Couldn't save. Check your connection and tap again.</div>
@@ -486,13 +494,13 @@ function openColor() {
     c.disabled = false;
     c.classList.toggle("selected", c.dataset.color === cur);
   });
-  const votes = { rose: 0, blue: 0 };
+  const votes = { brick: 0, denim: 0 };
   ADULTS.forEach((a) => {
     const c = responses[a.id]?.color;
     if (votes[c] !== undefined) votes[c]++;
   });
-  $("votes-rose").textContent = votes.rose === 1 ? "1 vote" : `${votes.rose} votes`;
-  $("votes-blue").textContent = votes.blue === 1 ? "1 vote" : `${votes.blue} votes`;
+  $("votes-brick").textContent = votes.brick === 1 ? "1 vote" : `${votes.brick} votes`;
+  $("votes-denim").textContent = votes.denim === 1 ? "1 vote" : `${votes.denim} votes`;
   show("screen-color");
 }
 
@@ -521,7 +529,7 @@ async function openResults() {
   const list = $("results-list");
   list.innerHTML = "";
 
-  const votes = { rose: 0, blue: 0 };
+  const votes = { brick: 0, denim: 0 };
   ADULTS.forEach((a) => {
     const c = responses[a.id]?.color;
     if (votes[c] !== undefined) votes[c]++;
@@ -530,7 +538,7 @@ async function openResults() {
   voteHead.className = "result-group";
   voteHead.textContent = "Color votes";
   list.appendChild(voteHead);
-  [["rose", "Rose"], ["blue", "Blue"]].forEach(([key, label]) => {
+  [["brick", "Brick"], ["denim", "Denim"]].forEach(([key, label]) => {
     const row = document.createElement("div");
     row.className = "result-row";
     row.innerHTML = `<span class="result-right"><span class="swatch ${key}"></span><span>${label}</span></span>` +
