@@ -34,10 +34,12 @@
     padding: 24px 16px 48px;
   }
   .wrap { max-width: 440px; margin: 0 auto; }
-  .tee { display: block; margin: 0 auto 6px; transform: rotate(-5deg); }
+  .tee { flex: none; transform: rotate(-8deg); }
   h1 {
     font-family: "Fredoka", "Baloo 2", sans-serif;
-    font-size: 2rem; text-align: center; margin-bottom: 2px; letter-spacing: 0.5px;
+    font-size: 2rem; letter-spacing: 0.5px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin-bottom: 2px;
   }
   .sub { text-align: center; color: var(--muted); margin-bottom: 26px; font-size: 1rem; font-weight: 600; }
   .screen { display: none; }
@@ -116,6 +118,27 @@
   .primary:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 rgba(58, 46, 57, 0.9); }
   .primary:disabled { opacity: 0.4; cursor: default; }
 
+  .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
+  .color-card {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 12px; background: var(--card);
+    border: 2.5px solid var(--ink); border-radius: 18px; box-shadow: var(--shadow);
+    font-family: inherit; font-size: 1.1rem; font-weight: 800; color: var(--ink);
+    cursor: pointer; transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .color-card img { width: 100%; border-radius: 12px; }
+  .color-card:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 rgba(58, 46, 57, 0.9); }
+  .color-card.selected { background: #d8f5f2; }
+  .color-card:disabled { opacity: 0.6; cursor: default; }
+
+  .swatch {
+    width: 20px; height: 20px; border-radius: 50%; flex: none;
+    border: 2px solid var(--ink); display: inline-block;
+  }
+  .swatch.rose { background: #c76b76; }
+  .swatch.blue { background: #b9c9ee; }
+  .result-right { display: flex; align-items: center; gap: 8px; }
+
   .error {
     display: none; margin-top: 14px; padding: 12px 14px;
     border: 2px solid var(--danger); border-radius: 12px;
@@ -148,12 +171,14 @@
 </head>
 <body>
 <div class="wrap">
-  <svg class="tee" viewBox="0 0 64 58" width="54" height="52" aria-hidden="true">
-    <path d="M22 3 L8 9 L2 21 L12 27 L13 54 L51 54 L52 27 L62 21 L56 9 L42 3 C42 11 22 11 22 3 Z"
-          fill="#ff6b6b" stroke="#3a2e39" stroke-width="3" stroke-linejoin="round"/>
-    <path d="M25 30 h14 M25 38 h14" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
-  </svg>
-  <h1>Family Shirt Sizes</h1>
+  <h1>
+    <svg class="tee" viewBox="0 0 64 58" width="38" height="35" aria-hidden="true">
+      <path d="M22 3 L8 9 L2 21 L12 27 L13 54 L51 54 L52 27 L62 21 L56 9 L42 3 C42 11 22 11 22 3 Z"
+            fill="#ff6b6b" stroke="#3a2e39" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M25 30 h14 M25 38 h14" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    </svg>
+    <span>Family Shirt Sizes</span>
+  </h1>
   <p class="sub">Tap your name and pick your size</p>
 
   <!-- Main screen -->
@@ -171,6 +196,23 @@
     <div id="kids-area"></div>
     <button class="primary" id="btn-submit" disabled>Submit</button>
     <div class="error" id="save-error">Couldn't save. Check your connection and tap Submit again.</div>
+  </div>
+
+  <!-- Color screen (after submitting sizes) -->
+  <div class="screen" id="screen-color">
+    <button class="back" id="btn-back-color">&larr; Back</button>
+    <h2>Last thing: vote on the shirt color</h2>
+    <div class="color-grid">
+      <button class="color-card" data-color="rose">
+        <img src="shirts/rose.jpg" alt="Rose shirt">
+        <span>Rose</span>
+      </button>
+      <button class="color-card" data-color="blue">
+        <img src="shirts/blue.jpg" alt="Blue shirt">
+        <span>Blue</span>
+      </button>
+    </div>
+    <div class="error" id="color-error">Couldn't save. Check your connection and tap again.</div>
   </div>
 
   <!-- Results screen -->
@@ -391,8 +433,7 @@ async function submit() {
   try {
     await storage.save(updates);
     Object.assign(responses, updates);
-    renderHome();
-    show("screen-home");
+    openColor();
   } catch (e) {
     $("save-error").classList.add("show");
     btn.disabled = false;
@@ -400,11 +441,58 @@ async function submit() {
   }
 }
 
+// ---- Color screen --------------------------------------------------------
+function openColor() {
+  $("color-error").classList.remove("show");
+  const cur = responses[current.id]?.color;
+  document.querySelectorAll(".color-card").forEach((c) => {
+    c.disabled = false;
+    c.classList.toggle("selected", c.dataset.color === cur);
+  });
+  show("screen-color");
+}
+
+document.querySelectorAll(".color-card").forEach((card) => {
+  card.onclick = async () => {
+    $("color-error").classList.remove("show");
+    document.querySelectorAll(".color-card").forEach((c) => { c.disabled = true; });
+    card.classList.add("selected");
+    const updates = {};
+    updates[current.id] = { ...(responses[current.id] || {}), color: card.dataset.color };
+    try {
+      await storage.save(updates);
+      Object.assign(responses, updates);
+      renderHome();
+      show("screen-home");
+    } catch (e) {
+      $("color-error").classList.add("show");
+      document.querySelectorAll(".color-card").forEach((c) => { c.disabled = false; });
+    }
+  };
+});
+
 // ---- Results screen ------------------------------------------------------
 async function openResults() {
   try { responses = await storage.load(); } catch (e) { /* keep what we have */ }
   const list = $("results-list");
   list.innerHTML = "";
+
+  const votes = { rose: 0, blue: 0 };
+  ADULTS.forEach((a) => {
+    const c = responses[a.id]?.color;
+    if (votes[c] !== undefined) votes[c]++;
+  });
+  const voteHead = document.createElement("div");
+  voteHead.className = "result-group";
+  voteHead.textContent = "Color votes";
+  list.appendChild(voteHead);
+  [["rose", "Rose"], ["blue", "Blue"]].forEach(([key, label]) => {
+    const row = document.createElement("div");
+    row.className = "result-row";
+    row.innerHTML = `<span class="result-right"><span class="swatch ${key}"></span><span>${label}</span></span>` +
+      `<span class="size">${votes[key]}</span>`;
+    list.appendChild(row);
+  });
 
   const groups = [
     { title: "Adults", people: ADULTS },
@@ -419,7 +507,10 @@ async function openResults() {
       const row = document.createElement("div");
       row.className = "result-row";
       const size = responses[p.id]?.size;
-      row.innerHTML = `<span>${p.label}</span><span class="${size ? "size" : "size pending"}">${size || "waiting"}</span>`;
+      const color = responses[p.id]?.color;
+      row.innerHTML = `<span>${p.label}</span><span class="result-right">` +
+        (color ? `<span class="swatch ${color}"></span>` : "") +
+        `<span class="${size ? "size" : "size pending"}">${size || "waiting"}</span></span>`;
       list.appendChild(row);
     });
   });
@@ -429,6 +520,7 @@ async function openResults() {
 // ---- Wiring --------------------------------------------------------------
 $("btn-submit").onclick = submit;
 $("btn-back-person").onclick = () => { renderHome(); show("screen-home"); };
+$("btn-back-color").onclick = () => { renderHome(); show("screen-home"); };
 $("btn-back-results").onclick = () => { renderHome(); show("screen-home"); };
 
 (async function init() {
