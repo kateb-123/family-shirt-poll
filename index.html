@@ -63,12 +63,20 @@
   .name-btn:nth-child(6n+4) { background: #ddebfd; }
   .name-btn:nth-child(6n+5) { background: #ecdffb; }
   .name-btn:nth-child(6n+6) { background: #e7f6cf; }
-  .name-btn .done {
-    width: 30px; height: 30px; border-radius: 50%; flex: none;
-    background: var(--teal); border: 2px solid var(--ink); color: #fff;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1rem; font-weight: 800;
+  .all-in { text-align: center; font-weight: 800; font-size: 1.2rem; margin: 8px 0 4px; }
+  .done-head {
+    margin: 30px 0 12px; font-size: 0.85rem; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted); font-weight: 800; text-align: center;
   }
+  .done-list { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .done-pill {
+    display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px;
+    background: var(--card); border: 2px solid var(--ink); border-radius: 999px;
+    box-shadow: var(--shadow-sm);
+    font-family: inherit; font-size: 1rem; font-weight: 800; color: var(--ink); cursor: pointer;
+  }
+  .done-pill:active { transform: translate(2px, 2px); box-shadow: none; }
+  .done-pill .tick { color: var(--teal); }
 
   .back {
     background: none; border: none; color: var(--sky);
@@ -127,6 +135,7 @@
     cursor: pointer; transition: transform 0.12s ease, box-shadow 0.12s ease;
   }
   .color-card img { width: 100%; border-radius: 12px; }
+  .color-card .votes { font-size: 0.9rem; color: var(--muted); font-weight: 700; }
   .color-card:active { transform: translate(3px, 3px); box-shadow: 1px 1px 0 rgba(58, 46, 57, 0.9); }
   .color-card.selected { background: #d8f5f2; }
   .color-card:disabled { opacity: 0.6; cursor: default; }
@@ -201,15 +210,17 @@
   <!-- Color screen (after submitting sizes) -->
   <div class="screen" id="screen-color">
     <button class="back" id="btn-back-color">&larr; Back</button>
-    <h2>Last thing: vote on the shirt color</h2>
+    <h2>Vote on a shirt color</h2>
     <div class="color-grid">
       <button class="color-card" data-color="rose">
         <img src="shirts/rose.jpg" alt="Rose shirt">
         <span>Rose</span>
+        <span class="votes" id="votes-rose"></span>
       </button>
       <button class="color-card" data-color="blue">
         <img src="shirts/blue.jpg" alt="Blue shirt">
         <span>Blue</span>
+        <span class="votes" id="votes-blue"></span>
       </button>
     </div>
     <div class="error" id="color-error">Couldn't save. Check your connection and tap again.</div>
@@ -298,14 +309,40 @@ function show(screenId) {
 function renderHome() {
   const list = $("name-list");
   list.innerHTML = "";
-  ADULTS.forEach((a) => {
+  const pending = ADULTS.filter((a) => !responses[a.id]?.size);
+  const done = ADULTS.filter((a) => responses[a.id]?.size);
+
+  pending.forEach((a) => {
     const btn = document.createElement("button");
     btn.className = "name-btn";
-    const done = responses[a.id] && responses[a.id].size;
-    btn.innerHTML = `<span>${a.label}</span>${done ? '<span class="done">&#10003;</span>' : ""}`;
+    btn.innerHTML = `<span>${a.label}</span>`;
     btn.onclick = () => openPerson(a);
     list.appendChild(btn);
   });
+
+  if (!pending.length) {
+    const allIn = document.createElement("p");
+    allIn.className = "all-in";
+    allIn.textContent = "Everyone's in!";
+    list.appendChild(allIn);
+  }
+
+  if (done.length) {
+    const head = document.createElement("div");
+    head.className = "done-head";
+    head.textContent = "Already submitted? Tap your name to change your answer";
+    list.appendChild(head);
+    const pills = document.createElement("div");
+    pills.className = "done-list";
+    done.forEach((a) => {
+      const pill = document.createElement("button");
+      pill.className = "done-pill";
+      pill.innerHTML = `<span class="tick">&#10003;</span><span>${a.label}</span>`;
+      pill.onclick = () => openPerson(a);
+      pills.appendChild(pill);
+    });
+    list.appendChild(pills);
+  }
   $("demo-note").classList.toggle("show", !TEXTDB_KEY);
 }
 
@@ -449,6 +486,13 @@ function openColor() {
     c.disabled = false;
     c.classList.toggle("selected", c.dataset.color === cur);
   });
+  const votes = { rose: 0, blue: 0 };
+  ADULTS.forEach((a) => {
+    const c = responses[a.id]?.color;
+    if (votes[c] !== undefined) votes[c]++;
+  });
+  $("votes-rose").textContent = votes.rose === 1 ? "1 vote" : `${votes.rose} votes`;
+  $("votes-blue").textContent = votes.blue === 1 ? "1 vote" : `${votes.blue} votes`;
   show("screen-color");
 }
 
